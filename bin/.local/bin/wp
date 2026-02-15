@@ -1,0 +1,26 @@
+#!/bin/bash
+
+WP_DIR="$HOME/.config/wallpapers"
+
+# 1. Start swww-daemon if it's not already running
+if ! pgrep -x "swww-daemon" > /dev/null; then
+    echo "Starting swww-daemon..."
+    swww-daemon &
+    # Give it a second to create the socket file
+    sleep 0.5
+fi
+
+# 2. Pick a file
+if [ -f "$1" ]; then
+    FILE="$1"
+else
+    FILE=$(find -L "$WP_DIR" -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.webp" \) | shuf -n 1)
+fi
+
+# 3. Final check and Apply
+if [ -n "$FILE" ]; then
+    swww img "$FILE" --transition-type grow --transition-pos 0.85,0.97 --transition-fps 60 --transition-duration 2
+else
+    echo "Error: No images found in $WP_DIR"
+    exit 1
+fi

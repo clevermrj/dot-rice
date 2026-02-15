@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+
+theme="$HOME/.config/rofi/wifi-dark.rasi"
+
+# Check WiFi status
+wifi_state=$(nmcli -fields WIFI g | tail -n1)
+if [[ "$wifi_state" =~ "enabled" ]]; then
+    toggle="󰖩  Disable WiFi"
+else
+    toggle="󰖪  Enable WiFi"
+fi
+
+# Get current connection
+current=$(nmcli -t -f ACTIVE,SSID dev wifi | grep '^yes' | cut -d: -f2)
+
+# Get unique networks, sorted by signal strength
+networks=$(nmcli -t -f SSID,SECURITY,SIGNAL dev wifi list | \
+    sed '/^$/d' | \
+    sort -t: -k3 -rn | \
+    awk -F: '!seen[$1]++')
+
+menu=""
+
+# Header: Connected Info
+if [[ -n "$current" ]]; then
+    printf -v line "%-3s  Connected: %s" "󰖩" "$current"
+    menu+="$line\n"
+fi
+
+# Controls
+menu+="$toggle\n"
+menu+="󰑐  Refresh\n"
+
+# Build list
+while IFS=: read -r ssid security signal; do
+    [[ -z "$ssid" || "$ssid" == "$current" ]] && continue
+
+    # Signal icons based on strength
+    if ((signal >= 75)); then bars="󰤨";
+    elif ((signal >= 50)); then bars="󰤥";
+    elif ((signal >= 25)); then bars="󰤢";
+    else bars="󰤟"; fi
+
+    lock=""
+    [[ "$security" != "--" ]] && lock="󰌾"
+
+    printf -v line "%-3s  %-25s %s" "$bars" "$ssid" "$lock"
+    menu+="$line\n"
+done <<< "$networks"
+
+# Run Rofi
+chosen=$(echo -e "$menu" | rofi -dmenu -i -p "WiFi" -theme "$theme")
+
+# Actions
+case "$chosen" in
+    *Enable*) nmcli radio wifi on && exit ;;
+    *Disable*) nmcli radio wifi off && exit ;;
+    *Refresh*) nmcli device wifi rescan && exit ;;
+    *Connected:*| "") exit ;;
+esac
+
+# Parse SSID from selection
+ssid=$(echo "$chosen" | awk '{$1=""; print $0}' | sed 's/󰌾//g' | xargs)
+
+# Get security type for the chosen SSID
+security=$(nmcli -t -f SSID,SECURITY dev wifi list | grep "^$ssid:" | head -n1 | cut -d: -f2)
+
+if [[ "$security" != "--" && -n "$ssid" ]]; then
+    password=$(rofi -dmenu -password -p "Password" \
+        -mesg "Enter password for: <b>$ssid</b>" \
+        -theme "$theme")
+    
+    [[ -z "$password" ]] && exit
+    nmcli device wifi connect "$ssid" password "$password"
+else
+    nmcli device wifi connect "$ssid"
+fi

@@ -1,0 +1,90 @@
+* {
+    /* Color Palette */
+    bg: #1e1e2e;
+    bg-alt: #2a2a3c;
+    fg: #cdd6f4;
+    selected: #89b4fa;
+    
+    red:    #e08c75;
+    orange: #d19a66;
+    yellow: #e5c07b;
+    green:  #98c379;
+    aqua:   #56b6c2;
+    blue:   #61afef;
+    purple: #c678dd;
+
+    /* Global Settings */
+    background-color: @bg;
+    text-color: @fg;
+    font: "JetBrainsMono Nerd Font 10"; /* Slightly smaller font for smaller window */
+}
+
+window {
+    /* Center Float & Size */
+    width: 380px;         /* Compact width */
+    location: center;    /* Position on screen */
+    anchor: center;      /* Pivot point */
+    
+    /* Styling */
+    border: 2px;
+    border-color: @selected;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+mainbox {
+    spacing: 12px;
+    children: [ inputbar, listview ];
+}
+
+inputbar {
+    padding: 8px;
+    background-color: @bg-alt;
+    border-radius: 8px;
+    children: [ prompt, entry ];
+}
+
+prompt {
+    margin: 0px 8px 0px 0px;
+    text-color: @purple;
+}
+
+entry {
+    placeholder: "Search...";
+    placeholder-color: @bg-alt;
+}
+
+listview {
+    lines: 8;            /* Limits height */
+    columns: 1;
+    fixed-height: true;
+    spacing: 6px;
+}
+element {
+    padding: 10px;
+    border-radius: 6px;
+    background-color: transparent;
+    /* Explicitly define only text as a child to drop the icon box */
+    children: [ element-text ]; 
+}
+
+element-icon {
+    enabled: false;
+    size: 0px;        /* Set to 0 to ensure no space is reserved */
+    padding: 0px;
+    margin: 0px;
+}
+
+element-text {
+    background-color: inherit;
+    text-color: inherit;
+    vertical-align: 0.5;
+}
+
+/* This puts the border around the selected WiFi network */
+element selected {
+    background-color: @bg-alt;  /* Subtle dark background */
+    text-color: @aqua;         /* "More appealing" text color */
+    border: 2px;               /* The requested border */
+    border-color: @aqua;       /* Border color matches text */
+}
